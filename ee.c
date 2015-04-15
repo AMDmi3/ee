@@ -61,6 +61,8 @@ char *ee_copyright_message =
 
 char *version = "@(#) ee, version "  EE_VERSION  " $Revision: 1.104 $";
 
+#define EE_WCHAR
+
 #define NCURSES_WIDECHAR 1
 
 #ifdef NCURSE
@@ -124,7 +126,7 @@ nl_catd catalog;
 #define COMMANDS     2
 
 struct text {
-	unsigned char *line;		/* line of characters		*/
+	wchar_t *line;		/* line of characters		*/
 	int line_number;		/* line number			*/
 	int line_length;	/* actual number of characters in the line */
 	int max_length;	/* maximum number of characters the line handles */
@@ -191,7 +193,7 @@ int ee_chinese = FALSE;		/* allows handling of multi-byte characters  */
 				/* code recognizes a two-byte character      */
 				/* sequence				     */
 
-unsigned char *point;		/* points to current position in line	*/
+wchar_t *point;			/* points to current position in line	*/
 unsigned char *srch_str;	/* pointer for search string		*/
 unsigned char *u_srch_str;	/* pointer to non-case sensitive search	*/
 unsigned char *srch_1;		/* pointer to start of suspect string	*/
@@ -199,9 +201,9 @@ unsigned char *srch_2;		/* pointer to next character of string	*/
 unsigned char *srch_3;
 unsigned char *in_file_name = NULL;	/* name of input file		*/
 char *tmp_file;	/* temporary file name			*/
-unsigned char *d_char;		/* deleted character			*/
-unsigned char *d_word;		/* deleted word				*/
-unsigned char *d_line;		/* deleted line				*/
+wchar_t *d_char;		/* deleted character			*/
+wchar_t *d_word;		/* deleted word				*/
+wchar_t *d_line;		/* deleted line				*/
 char in_string[513];	/* buffer for reading a file		*/
 unsigned char *print_command = (unsigned char *)"lpr";	/* string to use for the print command 	*/
 unsigned char *start_at_line = NULL;	/* move to this line at start of session*/
@@ -583,15 +585,15 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGINT, edit_abort);
-	d_char = malloc(3);	/* provide a buffer for multi-byte chars */
-	d_word = malloc(150);
+	d_char = malloc(3 * sizeof(wchar_t));	/* provide a buffer for multi-byte chars */
+	d_word = malloc(150 * sizeof(wchar_t));
 	*d_word = '\0';
 	d_line = NULL;
 	dlt_line = txtalloc();
 	dlt_line->line = d_line;
 	dlt_line->line_length = 0;
 	curr_line = first_line = txtalloc();
-	curr_line->line = point = malloc(10);
+	curr_line->line = point = malloc(10 * sizeof(wchar_t));
 	curr_line->line_length = 1;
 	curr_line->max_length = 10;
 	curr_line->prev_line = NULL;
@@ -3008,7 +3010,7 @@ get_line(int length, unsigned char *in_string, int *append)	/* read string and s
 			if (tline->next_line != NULL)
 				tline->next_line->prev_line = tline;
 			curr_line = tline;
-			curr_line->line = point = (unsigned char *) malloc(char_count);
+			curr_line->line = point = malloc(char_count * sizeof(wchar_t));
 			curr_line->line_length = char_count;
 			curr_line->max_length = char_count;
 		}
@@ -3251,6 +3253,8 @@ delete_text()
 int
 write_file(char *file_name, int warn_if_exists)
 {
+	// XXX: convert
+#if 0
 	char cr;
 	char *tmp_point;
 	struct text *out_line;
@@ -3320,11 +3324,15 @@ write_file(char *file_name, int warn_if_exists)
 	}
 	else
 		return(FALSE);
+#endif
+	return(FALSE);
 }
 
 int
 search(int display_message)		/* search for string in srch_str	*/
 {
+	// XXX: convert
+#if 0
 	int lines_moved;
 	int iter;
 	int found;
@@ -3433,6 +3441,8 @@ search(int display_message)		/* search for string in srch_str	*/
 		wmove(text_win, scr_vert,(scr_horz - horiz_offset));
 	}
 	return(found);
+#endif
+	return FALSE;
 }
 
 void
@@ -3500,6 +3510,8 @@ undel_char()			/* undelete last deleted character	*/
 void
 del_word()			/* delete word in front of cursor	*/
 {
+	// XXX: convert
+#if 0
 	int tposit;
 	int difference;
 	unsigned char *d_word2;
@@ -3549,11 +3561,14 @@ del_word()			/* delete word in front of cursor	*/
 	d_char[2] = tmp_char[2];
 	text_changes = TRUE;
 	formatted = FALSE;
+#endif
 }
 
 void
 undel_word()		/* undelete last deleted word		*/
 {
+	// XXX: convert
+#if 0
 	int temp;
 	int tposit;
 	unsigned char *tmp_old_ptr;
@@ -3611,11 +3626,14 @@ undel_word()		/* undelete last deleted word		*/
 	*tmp_old_ptr = '\0';
 	free(tmp_space);
 	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
+#endif
 }
 
 void
 del_line()			/* delete from cursor to end of line	*/
 {
+	// XXX: convert
+#if 0
 	unsigned char *dl1;
 	unsigned char *dl2;
 	int tposit;
@@ -3644,11 +3662,14 @@ del_line()			/* delete from cursor to end of line	*/
 		deletex(FALSE);
 	}
 	text_changes = TRUE;
+#endif
 }
 
 void
 undel_line()			/* undelete last deleted line		*/
 {
+	// XXX: convert
+#if 0
 	unsigned char *ud1;
 	unsigned char *ud2;
 	int tposit;
@@ -3672,6 +3693,7 @@ undel_line()			/* undelete last deleted line		*/
 	}
 	*ud1 = '\0';
 	draw_line(scr_vert, scr_horz,point,position,curr_line->line_length);
+#endif
 }
 
 void
@@ -3687,7 +3709,7 @@ void
 move_rel(int direction, int lines)	/* move relative to current line	*/
 {
 	int i;
-	char *tmp;
+	wchar_t *tmp;
 
 	if (direction == 'u')
 	{
