@@ -1425,6 +1425,7 @@ draw_line(int vertical, int horiz, wchar_t *ptr, int t_pos, int length)	/* redra
 	wmove(text_win, vertical, (horiz - horiz_offset));
 }
 
+#ifndef EE_WCHAR
 void
 insert_line(int disp)			/* insert new line		*/
 {
@@ -1500,6 +1501,83 @@ insert_line(int disp)			/* insert new line		*/
 			curr_line->line_length);
 	}
 }
+#else
+void
+insert_line(int disp)			/* insert new line		*/
+{
+	int temp_pos;
+	int temp_pos2;
+	wchar_t *temp;
+	wchar_t *extra;
+	struct text *temp_nod;
+
+	text_changes = TRUE;
+	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
+	wclrtoeol(text_win);
+	temp_nod= txtalloc();
+	temp_nod->line = extra = malloc(10 * sizeof(wchar_t));
+	temp_nod->line_length = 1;
+	temp_nod->max_length = 10;
+	temp_nod->line_number = curr_line->line_number + 1;
+	temp_nod->next_line = curr_line->next_line;
+	if (temp_nod->next_line != NULL)
+		temp_nod->next_line->prev_line = temp_nod;
+	temp_nod->prev_line = curr_line;
+	curr_line->next_line = temp_nod;
+	temp_pos2 = position;
+	temp = point;
+	if (temp_pos2 < curr_line->line_length)
+	{
+		temp_pos = 1;
+		while (temp_pos2 < curr_line->line_length)
+		{
+			if ((temp_nod->max_length - temp_nod->line_length)< 5)
+				extra = resiz_line(10, temp_nod, temp_pos);
+			temp_nod->line_length++;
+			temp_pos++;
+			temp_pos2++;
+			*extra= *temp;
+			extra++;
+			temp++;
+		}
+		temp=point;
+		*temp = L'\0';
+		temp = resiz_line((1 - temp_nod->line_length), curr_line, position);
+		curr_line->line_length = 1 + temp - curr_line->line;
+	}
+	curr_line->line_length = position;
+	absolute_lin++;
+	curr_line = temp_nod;
+	*extra = L'\0';
+	position = 1;
+	point= curr_line->line;
+	if (disp)
+	{
+		if (scr_vert < last_line)
+		{
+			scr_vert++;
+			wclrtoeol(text_win);
+			wmove(text_win, scr_vert, 0);
+			winsertln(text_win);
+		}
+		else
+		{
+			wmove(text_win, 0,0);
+			wdeleteln(text_win);
+			wmove(text_win, last_line,0);
+			wclrtobot(text_win);
+		}
+		scr_pos = scr_horz = 0;
+		if (horiz_offset)
+		{
+			horiz_offset = 0;
+			midscreen(scr_vert, point);
+		}
+		draw_line(scr_vert, scr_horz, point, position,
+			curr_line->line_length);
+	}
+}
+#endif
 
 struct text *txtalloc()		/* allocate space for line structure	*/
 {
