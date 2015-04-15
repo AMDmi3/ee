@@ -297,6 +297,7 @@ void print_buffer(void);
 void command_prompt(void);
 void command(char *cmd_str1);
 int scan(char *line, int offset, int column);
+int scan(wchar_t *line, int offset, int column);
 char *get_string(char *prompt, int advance);
 int compare(char *string1, char *string2, int sensitive);
 int compare(wchar_t *string1, wchar_t *string2, int sensitive);
@@ -2214,6 +2215,25 @@ int
 scan(char *line, int offset, int column)	/* determine horizontal position for get_string	*/
 {
 	char *stemp;
+	int i;
+	int j;
+
+	stemp = line;
+	i = 0;
+	j = column;
+	while (i < offset)
+	{
+		i++;
+		j += len_char(*stemp, j);
+		stemp++;
+	}
+	return(j);
+}
+
+int
+scan(wchar_t *line, int offset, int column)	/* determine horizontal position for get_string	*/
+{
+	wchar_t *stemp;
 	int i;
 	int j;
 
