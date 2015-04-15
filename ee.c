@@ -211,12 +211,6 @@ wint_t in;			/* input character			*/
 FILE *temp_fp;			/* temporary file pointer		*/
 FILE *bit_bucket;		/* file pointer to /dev/null		*/
 
-char *table[] = {
-	"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G", "^H", "\t", "^J",
-	"^K", "^L", "^M", "^N", "^O", "^P", "^Q", "^R", "^S", "^T", "^U",
-	"^V", "^W", "^X", "^Y", "^Z", "^[", "^\\", "^]", "^^", "^_"
-	};
-
 wchar_t *wtable[] = {
 	L"^@", L"^A", L"^B", L"^C", L"^D", L"^E", L"^F", L"^G", L"^H", L"\t", L"^J",
 	L"^K", L"^L", L"^M", L"^N", L"^O", L"^P", L"^Q", L"^R", L"^S", L"^T", L"^U",
@@ -261,9 +255,7 @@ void insert(wchar_t character);
 void deletex(int disp);
 void scanline(wchar_t *pos);
 int tabshift(int temp_int);
-int out_char(WINDOW *window, int character, int column);
 int out_char(WINDOW *window, wchar_t character, int column);
-int len_char(int character, int column);
 int len_char(wchar_t character, int column);
 void draw_line(int vertical, int horiz, unsigned char *ptr, int t_pos, int length);
 void draw_line(int vertical, int horiz, wchar_t *ptr, int t_pos, int length);
@@ -930,52 +922,6 @@ tabshift(int temp_int)		/* give the number of spaces to shift	*/
 }
 
 int
-out_char(WINDOW *window, int character, int column)	/* output non-printing character */
-{
-	int i1, i2;
-	char *string;
-	char string2[8];
-
-	if (character == TAB)
-	{
-		i1 = tabshift(column);
-		for (i2 = 0;
-		  (i2 < i1) && (((column+i2+1)-horiz_offset) < last_col); i2++)
-		{
-			waddch(window, ' ');
-		}
-		return(i1);
-	}
-	else if ((character >= '\0') && (character < ' '))
-	{
-		string = table[(int) character];
-	}
-	else if ((character < 0) || (character >= 127))
-	{
-		if (character == 127)
-			string = "^?";
-		else if (!eightbit)
-		{
-			sprintf(string2, "<%d>", (character < 0) ? (character + 256) : character);
-			string = string2;
-		}
-		else
-		{
-			waddch(window, (unsigned char)character );
-			return(1);
-		}
-	}
-	else
-	{
-		waddch(window, (unsigned char)character);
-		return(1);
-	}
-	for (i2 = 0; (string[i2] != '\0') && (((column+i2+1)-horiz_offset) < last_col); i2++)
-		waddch(window, (unsigned char)string[i2]);
-	return(strlen(string));
-}
-
-int
 out_char(WINDOW *window, wchar_t character, int column)	/* output non-printing character */
 {
 	int i1, i2;
@@ -1006,28 +952,6 @@ out_char(WINDOW *window, wchar_t character, int column)	/* output non-printing c
 	for (i2 = 0; (string[i2] != '\0') && (((column+i2+1)-horiz_offset) < last_col); i2++)
 		waddnwstr(window, &string[i2], 1);
 	return(wcslen(string));
-}
-
-int
-len_char(int character, int column)	/* return the length of the character	*/
-/* column - the column must be known to provide spacing for tabs	*/
-{
-	int length;
-
-	if (character == '\t')
-		length = tabshift(column);
-	else if ((character >= 0) && (character < 32))
-		length = 2;
-	else if ((character >= 32) && (character <= 126))
-		length = 1;
-	else if (character == 127)
-		length = 2;
-	else if (((character > 126) || (character < 0)) && (!eightbit))
-		length = 5;
-	else
-		length = 1;
-
-	return(length);
 }
 
 int
