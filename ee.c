@@ -318,6 +318,7 @@ void get_options(int numargs, char *arguments[]);
 void check_fp(void);
 void get_file(char *file_name);
 void get_line(int length, unsigned char *in_string, int *append);
+void get_line(int length, wchar_t *in_string, int *append);
 void draw_screen(void);
 void finish(void);
 int quit(int noverify);
@@ -3025,6 +3026,76 @@ get_line(int length, unsigned char *in_string, int *append)	/* read string and s
 		*point = '\0';
 		*append = FALSE;
 		if ((num == length) && (*str2 != '\n'))
+			*append = TRUE;
+	}
+}
+
+void
+get_line(int length, wchar_t *in_string, int *append)	/* read string and split into lines */
+/* length - length of string read by read		*/
+/* in_string - string read by read				*/
+/* append - TRUE if must append more text to end of current line	*/
+{
+	wchar_t *str1;
+	wchar_t *str2;
+	int num;		/* offset from start of string		*/
+	int char_count;		/* length of new line (or added portion	*/
+	int temp_counter;	/* temporary counter value		*/
+	struct text *tline;	/* temporary pointer to new line	*/
+	int first_time;		/* if TRUE, the first time through the loop */
+
+	str2 = in_string;
+	num = 0;
+	first_time = TRUE;
+	while (num < length)
+	{
+		if (!first_time)
+		{
+			if (num < length)
+			{
+				str2++;
+				num++;
+			}
+		}
+		else
+			first_time = FALSE;
+		str1 = str2;
+		char_count = 1;
+		/* find end of line	*/
+		while ((*str2 != L'\n') && (num < length))
+		{
+			str2++;
+			num++;
+			char_count++;
+		}
+		if (!(*append))	/* if not append to current line, insert new one */
+		{
+			tline = txtalloc();	/* allocate data structure for next line */
+			tline->line_number = curr_line->line_number + 1;
+			tline->next_line = curr_line->next_line;
+			tline->prev_line = curr_line;
+			curr_line->next_line = tline;
+			if (tline->next_line != NULL)
+				tline->next_line->prev_line = tline;
+			curr_line = tline;
+			curr_line->line = point = malloc(char_count * sizeof(wchar_t));
+			curr_line->line_length = char_count;
+			curr_line->max_length = char_count;
+		}
+		else
+		{
+			point = resiz_line(char_count, curr_line, curr_line->line_length);
+			curr_line->line_length += (char_count - 1);
+		}
+		for (temp_counter = 1; temp_counter < char_count; temp_counter++)
+		{
+			*point = *str1;
+			point++;
+			str1++;
+		}
+		*point = L'\0';
+		*append = FALSE;
+		if ((num == length) && (*str2 != L'\n'))
 			*append = TRUE;
 	}
 }
