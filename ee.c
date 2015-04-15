@@ -656,8 +656,8 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 		}
 
 		wrefresh(text_win);
-		in = wgetch(text_win);
-		if (in == -1)
+		ins = wget_wch(text_win, &in);
+		if (ins == ERR)
 			exit(0);  /* without this exit ee will go into an
 			             infinite loop if the network
 			             session detaches */
@@ -676,7 +676,7 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 			wrefresh(com_win);
 		}
 
-		if (in > 255)
+		if (ins == KEY_CODE_YES)
 			function_key();
 		else if ((in == '\10') || (in == 127))
 		{
