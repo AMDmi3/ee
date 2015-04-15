@@ -255,7 +255,11 @@ struct menu_entries {
 	int argument;
 	};
 
+#ifndef EE_WCHAR
 unsigned char *resiz_line(int factor, struct text *rline, int rpos);
+#else
+wchar_t *resiz_line(int factor, struct text *rline, int rpos);
+#endif
 void insert(int character);
 void deletex(int disp);
 void scanline(unsigned char *pos);
@@ -670,6 +674,7 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 	return(0);
 }
 
+#ifndef EE_WCHAR
 unsigned char *
 resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to length + factor*/
 /* factor - resize factor				*/
@@ -684,6 +689,22 @@ resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to lengt
 		rpoint++;
 	return(rpoint);
 }
+#else
+wchar_t *
+resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to length + factor*/
+/* factor - resize factor				*/
+/* rline - position in line				*/
+{
+	wchar_t *rpoint;
+	int resiz_var;
+
+	rline->max_length += factor;
+	rpoint = rline->line = realloc(rline->line, rline->max_length * sizeof(wchar_t));
+	for (resiz_var = 1 ; (resiz_var < rpos) ; resiz_var++)
+		rpoint++;
+	return(rpoint);
+}
+#endif
 
 void
 insert(int character)		/* insert character into line		*/
