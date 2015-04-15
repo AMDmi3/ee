@@ -259,6 +259,7 @@ void insert_line(int disp);
 struct text *txtalloc(void);
 struct files *name_alloc(void);
 unsigned char *next_word(unsigned char *string);
+wchar_t *next_word(wchar_t *string);
 void prev_word(void);
 void control(void);
 void emacs_control(void);
@@ -1130,6 +1131,15 @@ unsigned char *next_word(unsigned char *string)		/* move to next word in string	
 	while ((*string != '\0') && ((*string != 32) && (*string != 9)))
 		string++;
 	while ((*string != '\0') && ((*string == 32) || (*string == 9)))
+		string++;
+	return(string);
+}
+
+wchar_t *next_word(wchar_t *string)		/* move to next word in string		*/
+{
+	while ((*string != L'\0') && ((*string != L' ') && (*string != L'\t')))
+		string++;
+	while ((*string != L'\0') && ((*string == L' ') || (*string == L'\t')))
 		string++;
 	return(string);
 }
