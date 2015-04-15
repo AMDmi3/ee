@@ -308,6 +308,7 @@ wchar_t *get_string(wchar_t *prompt, int advance);
 int compare(char *string1, char *string2, int sensitive);
 int compare(wchar_t *string1, wchar_t *string2, int sensitive);
 void goto_line(char *cmd_str);
+void goto_line(wchar_t *cmd_str);
 #ifndef EE_WCHAR
 void midscreen(int line, unsigned char *pnt);
 #else
@@ -2579,6 +2580,63 @@ goto_line(char *cmd_str)
 	while ((*ptr >='0') && (*ptr <= '9'))
 	{
 		i= i * 10 + (*ptr - '0');
+		ptr++;
+	}
+	number = i;
+	i = 0;
+	t_line = curr_line;
+	while ((t_line->line_number > number) && (t_line->prev_line != NULL))
+	{
+		i++;
+		t_line = t_line->prev_line;
+		direction = 'u';
+	}
+	while ((t_line->line_number < number) && (t_line->next_line != NULL))
+	{
+		i++;
+		direction = 'd';
+		t_line = t_line->next_line;
+	}
+	if ((i < 30) && (i > 0))
+	{
+		move_rel(direction, i);
+	}
+	else
+	{
+		if (direction != 'd')
+		{
+			absolute_lin += i;
+		}
+		else
+		{
+			absolute_lin -= i;
+		}
+		curr_line = t_line;
+		point = curr_line->line;
+		position = 1;
+		midscreen((last_line / 2), point);
+		scr_pos = scr_horz;
+	}
+	wmove(com_win, 0, 0);
+	wclrtoeol(com_win);
+	wprintw(com_win, line_num_str, curr_line->line_number);
+	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
+}
+
+void
+goto_line(wchar_t *cmd_str)
+{
+	int number;
+	int i;
+	wchar_t *ptr;
+	char direction = '\0';
+	struct text *t_line;
+
+	ptr = cmd_str;
+	i= 0;
+	while ((*ptr >= L'0') && (*ptr <= L'9'))
+	{
+		i= i * 10 + (*ptr - L'0');
 		ptr++;
 	}
 	number = i;
