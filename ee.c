@@ -205,8 +205,12 @@ unsigned char *d_line;		/* deleted line				*/
 char in_string[513];	/* buffer for reading a file		*/
 unsigned char *print_command = (unsigned char *)"lpr";	/* string to use for the print command 	*/
 unsigned char *start_at_line = NULL;	/* move to this line at start of session*/
-int in;				/* input status			*/
-wint_t inc;			/* input character			*/
+int ins;			/* input status				*/
+#ifndef EE_WCHAR
+int in;				/* input character			*/
+#else
+wint_t in;			/* input character			*/
+#endif
 
 FILE *temp_fp;			/* temporary file pointer		*/
 FILE *bit_bucket;		/* file pointer to /dev/null		*/
@@ -2435,10 +2439,10 @@ get_string(wchar_t *prompt, int advance)	/* read string from input on command li
 	do
 	{
 		esc_flag = FALSE;
-		in = wget_wch(com_win, &inc);
-		if (in == ERR)
+		ins = wget_wch(com_win, &in);
+		if (ins == ERR)
 			exit(0);
-		if (((inc == 8) || (inc == 127) || (inc == KEY_BACKSPACE)) && (g_pos > 0))
+		if (((in == 8) || (in == 127) || (in == KEY_BACKSPACE)) && (g_pos > 0))
 		{
 			tmp_int = g_horz;
 			g_pos--;
@@ -2455,31 +2459,31 @@ get_string(wchar_t *prompt, int advance)	/* read string from input on command li
 			}
 			nam_str--;
 		}
-		else if ((inc != 8) && (inc != 127) && (inc != '\n') && (inc != '\r') && (inc < 256))
+		else if ((in != 8) && (in != 127) && (in != '\n') && (in != '\r') && (in < 256))
 		{
-			if (inc == '\026')	/* control-v, accept next character verbatim	*/
+			if (in == '\026')	/* control-v, accept next character verbatim	*/
 			{			/* allows entry of ^m, ^j, and ^h	*/
 				esc_flag = TRUE;
-				in = wget_wch(com_win, &inc);
-				if (in == ERR)
+				ins = wget_wch(com_win, &in);
+				if (ins == ERR)
 					exit(0);
 			}
-			*nam_str = inc;
+			*nam_str = in;
 			g_pos++;
-			if (!iswprint(inc) && (g_horz < (last_col - 1)))
-				g_horz += out_char(com_win, inc, g_horz);
+			if (!iswprint(in) && (g_horz < (last_col - 1)))
+				g_horz += out_char(com_win, in, g_horz);
 			else
 			{
 				g_horz++;
 				if (g_horz < (last_col - 1))
-					waddnwstr(com_win, &inc, 1);
+					waddnwstr(com_win, &in, 1);
 			}
 			nam_str++;
 		}
 		wrefresh(com_win);
 		if (esc_flag)
-			inc = L'\0';
-	} while ((inc != L'\n') && (inc != L'\r'));
+			in = L'\0';
+	} while ((in != L'\n') && (in != L'\r'));
 	*nam_str = '\0';
 	nam_str = tmp_string;
 	if (((*nam_str == L' ') || (*nam_str == L'\t')) && (advance))
