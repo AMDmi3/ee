@@ -216,6 +216,12 @@ char *table[] = {
 	"^V", "^W", "^X", "^Y", "^Z", "^[", "^\\", "^]", "^^", "^_"
 	};
 
+wchar_t *wtable[] = {
+	L"^@", L"^A", L"^B", L"^C", L"^D", L"^E", L"^F", L"^G", L"^H", L"\t", L"^J",
+	L"^K", L"^L", L"^M", L"^N", L"^O", L"^P", L"^Q", L"^R", L"^S", L"^T", L"^U",
+	L"^V", L"^W", L"^X", L"^Y", L"^Z", L"^[", L"^\\", L"^]", L"^^", L"^_"
+	};
+
 WINDOW *com_win;
 WINDOW *text_win;
 WINDOW *help_win;
