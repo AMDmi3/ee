@@ -261,6 +261,7 @@ void deletex(int disp);
 void scanline(unsigned char *pos);
 int tabshift(int temp_int);
 int out_char(WINDOW *window, int character, int column);
+int out_char(WINDOW *window, wchar_t character, int column);
 int len_char(int character, int column);
 void draw_line(int vertical, int horiz, unsigned char *ptr, int t_pos, int length);
 void insert_line(int disp);
@@ -967,6 +968,39 @@ out_char(WINDOW *window, int character, int column)	/* output non-printing chara
 	for (i2 = 0; (string[i2] != '\0') && (((column+i2+1)-horiz_offset) < last_col); i2++)
 		waddch(window, (unsigned char)string[i2]);
 	return(strlen(string));
+}
+
+int
+out_char(WINDOW *window, wchar_t character, int column)	/* output non-printing character */
+{
+	int i1, i2;
+	wchar_t *string;
+
+	if (character == L'\t')
+	{
+		i1 = tabshift(column);
+		for (i2 = 0;
+		  (i2 < i1) && (((column+i2+1)-horiz_offset) < last_col); i2++)
+		{
+			waddch(window, ' ');
+		}
+		return(i1);
+	}
+	else if ((character >= '\0') && (character < ' '))
+	{
+		string = wtable[(int) character];
+	}
+	else if (character == 127) {
+		string = L"^?";
+	}
+	else
+	{
+		waddnwstr(window, &character, 1);
+		return(1);
+	}
+	for (i2 = 0; (string[i2] != '\0') && (((column+i2+1)-horiz_offset) < last_col); i2++)
+		waddnwstr(window, &string[i2], 1);
+	return(wcslen(string));
 }
 
 int
