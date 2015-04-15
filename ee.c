@@ -254,7 +254,7 @@ struct menu_entries {
 int main P_((int argc, char *argv[]));
 unsigned char *resiz_line P_((int factor, struct text *rline, int rpos));
 void insert P_((int character));
-void delete P_((int disp));
+void deletex P_((int disp));
 void scanline P_((unsigned char *pos));
 int tabshift P_((int temp_int));
 int out_char P_((WINDOW *window, int character, int column));
@@ -648,7 +648,7 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 		else if ((in == '\10') || (in == 127))
 		{
 			in = 8;		/* make sure key is set to backspace */
-			delete(TRUE);
+			deletex(TRUE);
 		}
 		else if ((in > 31) || (in == 9))
 			insert(in);
@@ -763,7 +763,7 @@ insert(int character)		/* insert character into line		*/
 }
 
 void
-delete(int disp)			/* delete character		*/
+deletex(int disp)			/* delete character		*/
 {
 	unsigned char *tp;
 	unsigned char *temp2;
@@ -1191,7 +1191,7 @@ control()			/* use control for commands		*/
 	else if (in == 7)	/* control g	*/
 		bol();
 	else if (in == 8)	/* control h	*/
-		delete(TRUE);
+		deletex(TRUE);
 	else if (in == 9)	/* control i	*/
 		;
 	else if (in == 10)	/* control j	*/
@@ -1260,7 +1260,7 @@ emacs_control()
 	else if (in == 7)	/* control g	*/
 		move_rel('u', max(5, (last_line - 5)));
 	else if (in == 8)	/* control h	*/
-		delete(TRUE);
+		deletex(TRUE);
 	else if (in == 9)	/* control i	*/
 		;
 	else if (in == 10)	/* control j	*/
@@ -1538,7 +1538,7 @@ function_key()				/* process function key		*/
 	else if (in == KEY_DC)
 		del_char();
 	else if (in == KEY_BACKSPACE)
-		delete(TRUE);
+		deletex(TRUE);
 	else if (in == KEY_IL)
 	{		/* insert a line before current line	*/
 		insert_line(TRUE);
@@ -2689,12 +2689,12 @@ del_char()			/* delete current character	*/
 		position++;
 		point++;
 		scanline(point);
-		delete(TRUE);
+		deletex(TRUE);
 	}
 	else
 	{
 		right(TRUE);
-		delete(TRUE);
+		deletex(TRUE);
 	}
 }
 
@@ -2859,7 +2859,7 @@ del_line()			/* delete from cursor to end of line	*/
 	if (curr_line->next_line != NULL)
 	{
 		right(FALSE);
-		delete(FALSE);
+		deletex(FALSE);
 	}
 	text_changes = TRUE;
 }
@@ -4380,7 +4380,7 @@ spell_op()	/* check spelling of words in the editor	*/
 void
 ispell_op()
 {
-	char template[128], *name;
+	char templatex[128], *name;
 	char string[256];
 	int fd;
 
@@ -4388,8 +4388,8 @@ ispell_op()
 	{
 		return;
 	}
-	(void)sprintf(template, "/tmp/ee.XXXXXXXX");
-	fd = mkstemp(template);
+	(void)sprintf(templatex, "/tmp/ee.XXXXXXXX");
+	fd = mkstemp(templatex);
 	if (fd < 0) {
 		wmove(com_win, 0, 0);
 		wprintw(com_win, create_file_fail_msg, name);
