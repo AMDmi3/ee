@@ -61,8 +61,6 @@ char *ee_copyright_message =
 
 char *version = "@(#) ee, version "  EE_VERSION  " $Revision: 1.104 $";
 
-#define EE_WCHAR
-
 #define NCURSES_WIDECHAR 1
 
 #ifdef NCURSE
@@ -208,11 +206,7 @@ char in_string[513];	/* buffer for reading a file		*/
 unsigned char *print_command = (unsigned char *)"lpr";	/* string to use for the print command 	*/
 unsigned char *start_at_line = NULL;	/* move to this line at start of session*/
 int ins;			/* input status				*/
-#ifndef EE_WCHAR
-int in;				/* input character			*/
-#else
 wint_t in;			/* input character			*/
-#endif
 
 FILE *temp_fp;			/* temporary file pointer		*/
 FILE *bit_bucket;		/* file pointer to /dev/null		*/
@@ -262,19 +256,10 @@ struct menu_entries {
 	int argument;
 	};
 
-#ifndef EE_WCHAR
-unsigned char *resiz_line(int factor, struct text *rline, int rpos);
-void insert(int character);
-#else
 wchar_t *resiz_line(int factor, struct text *rline, int rpos);
 void insert(wchar_t character);
-#endif
 void deletex(int disp);
-#ifndef EE_WCHAR
-void scanline(unsigned char *pos);
-#else
 void scanline(wchar_t *pos);
-#endif
 int tabshift(int temp_int);
 int out_char(WINDOW *window, int character, int column);
 int out_char(WINDOW *window, wchar_t character, int column);
@@ -311,11 +296,7 @@ int compare(char *string1, char *string2, int sensitive);
 int compare(wchar_t *string1, wchar_t *string2, int sensitive);
 void goto_line(char *cmd_str);
 void goto_line(wchar_t *cmd_str);
-#ifndef EE_WCHAR
-void midscreen(int line, unsigned char *pnt);
-#else
 void midscreen(int line, wchar_t *pnt);
-#endif
 void get_options(int numargs, char *arguments[]);
 void check_fp(void);
 void get_file(char *file_name);
@@ -696,22 +677,6 @@ main(int argc, char *argv[])		/* beginning of main program		*/
 	return(0);
 }
 
-#ifndef EE_WCHAR
-unsigned char *
-resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to length + factor*/
-/* factor - resize factor				*/
-/* rline - position in line				*/
-{
-	unsigned char *rpoint;
-	int resiz_var;
-
-	rline->max_length += factor;
-	rpoint = rline->line = realloc(rline->line, rline->max_length );
-	for (resiz_var = 1 ; (resiz_var < rpos) ; resiz_var++)
-		rpoint++;
-	return(rpoint);
-}
-#else
 wchar_t *
 resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to length + factor*/
 /* factor - resize factor				*/
@@ -726,93 +691,7 @@ resiz_line(int factor, struct text *rline, int rpos)	/* resize the line to lengt
 		rpoint++;
 	return(rpoint);
 }
-#endif
 
-#ifndef EE_WCHAR
-void
-insert(int character)		/* insert character into line		*/
-{
-	int counter;
-	int value;
-	unsigned char *temp;	/* temporary pointer			*/
-	unsigned char *temp2;	/* temporary pointer			*/
-
-	if ((character == '\011') && (expand_tabs))
-	{
-		counter = len_char('\011', scr_horz);
-		for (; counter > 0; counter--)
-			insert(' ');
-		if (auto_format)
-			Auto_Format();
-		return;
-	}
-	text_changes = TRUE;
-	if ((curr_line->max_length - curr_line->line_length) < 5)
-		point = resiz_line(10, curr_line, position);
-	curr_line->line_length++;
-	temp = point;
-	counter = position;
-	while (counter < curr_line->line_length)	/* find end of line */
-	{
-		counter++;
-		temp++;
-	}
-	temp++;			/* increase length of line by one	*/
-	while (point < temp)
-	{
-		temp2=temp - 1;
-		*temp= *temp2;	/* shift characters over by one		*/
-		temp--;
-	}
-	*point = character;	/* insert new character			*/
-	wclrtoeol(text_win);
-	if (!isprint((unsigned char)character)) /* check for TAB character*/
-	{
-		scr_pos = scr_horz += out_char(text_win, character, scr_horz);
-		point++;
-		position++;
-	}
-	else
-	{
-		waddch(text_win, (unsigned char)character);
-		scr_pos = ++scr_horz;
-		point++;
-		position ++;
-	}
-
-	if ((observ_margins) && (right_margin < scr_pos))
-	{
-		counter = position;
-		while (scr_pos > right_margin)
-			prev_word();
-		if (scr_pos == 0)
-		{
-			while (position < counter)
-				right(TRUE);
-		}
-		else
-		{
-			counter -= position;
-			insert_line(TRUE);
-			for (value = 0; value < counter; value++)
-				right(TRUE);
-		}
-	}
-
-	if ((scr_horz - horiz_offset) > last_col)
-	{
-		horiz_offset += 8;
-		midscreen(scr_vert, point);
-	}
-
-	if ((auto_format) && (character == ' ') && (!formatted))
-		Auto_Format();
-	else if ((character != ' ') && (character != '\t'))
-		formatted = FALSE;
-
-	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
-}
-#else
 void
 insert(wchar_t character)		/* insert character into line		*/
 {
@@ -896,115 +775,7 @@ insert(wchar_t character)		/* insert character into line		*/
 
 	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
 }
-#endif
 
-#ifndef EE_WCHAR
-void
-deletex(int disp)			/* delete character		*/
-{
-	unsigned char *tp;
-	unsigned char *temp2;
-	struct text *temp_buff;
-	int temp_vert;
-	int temp_pos;
-	int del_width = 1;
-
-	if (point != curr_line->line)	/* if not at beginning of line	*/
-	{
-		text_changes = TRUE;
-		temp2 = tp = point;
-		if ((ee_chinese) && (position >= 2) && (*(point - 2) > 127))
-		{
-			del_width = 2;
-		}
-		tp -= del_width;
-		point -= del_width;
-		position -= del_width;
-		temp_pos = position;
-		curr_line->line_length -= del_width;
-		if ((*tp < ' ') || (*tp >= 127))	/* check for TAB */
-			scanline(tp);
-		else
-			scr_horz -= del_width;
-		scr_pos = scr_horz;
-		if (in == 8)
-		{
-			if (del_width == 1)
-				*d_char = *point; /* save deleted character  */
-			else
-			{
-				d_char[0] = *point;
-				d_char[1] = *(point + 1);
-			}
-			d_char[del_width] = '\0';
-		}
-		while (temp_pos <= curr_line->line_length)
-		{
-			temp_pos++;
-			*tp = *temp2;
-			tp++;
-			temp2++;
-		}
-		if ((scr_horz < horiz_offset) && (horiz_offset > 0))
-		{
-			horiz_offset -= 8;
-			midscreen(scr_vert, point);
-		}
-	}
-	else if (curr_line->prev_line != NULL)
-	{
-		text_changes = TRUE;
-		left(disp);			/* go to previous line	*/
-		temp_buff = curr_line->next_line;
-		point = resiz_line(temp_buff->line_length, curr_line, position);
-		if (temp_buff->next_line != NULL)
-			temp_buff->next_line->prev_line = curr_line;
-		curr_line->next_line = temp_buff->next_line;
-		temp2 = temp_buff->line;
-		if (in == 8)
-		{
-			d_char[0] = '\n';
-			d_char[1] = '\0';
-		}
-		tp = point;
-		temp_pos = 1;
-		while (temp_pos < temp_buff->line_length)
-		{
-			curr_line->line_length++;
-			temp_pos++;
-			*tp = *temp2;
-			tp++;
-			temp2++;
-		}
-		*tp = '\0';
-		free(temp_buff->line);
-		free(temp_buff);
-		temp_buff = curr_line;
-		temp_vert = scr_vert;
-		scr_pos = scr_horz;
-		if (scr_vert < last_line)
-		{
-			wmove(text_win, scr_vert + 1, 0);
-			wdeleteln(text_win);
-		}
-		while ((temp_buff != NULL) && (temp_vert < last_line))
-		{
-			temp_buff = temp_buff->next_line;
-			temp_vert++;
-		}
-		if ((temp_vert == last_line) && (temp_buff != NULL))
-		{
-			tp = temp_buff->line;
-			wmove(text_win, last_line,0);
-			wclrtobot(text_win);
-			draw_line(last_line, 0, tp, 1, temp_buff->line_length);
-			wmove(text_win, scr_vert, (scr_horz - horiz_offset));
-		}
-	}
-	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
-	formatted = FALSE;
-}
-#else
 void
 deletex(int disp)			/* delete character		*/
 {
@@ -1110,48 +881,7 @@ deletex(int disp)			/* delete character		*/
 	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
 	formatted = FALSE;
 }
-#endif
 
-#ifndef EE_WCHAR
-void
-scanline(unsigned char *pos)	/* find the proper horizontal position for the pointer	*/
-{
-	int temp;
-	unsigned char *ptr;
-
-	ptr = curr_line->line;
-	temp = 0;
-	while (ptr < pos)
-	{
-		if (*ptr <= 8)
-			temp += 2;
-		else if (*ptr == 9)
-			temp += tabshift(temp);
-		else if ((*ptr >= 10) && (*ptr <= 31))
-			temp += 2;
-		else if ((*ptr >= 32) && (*ptr < 127))
-			temp++;
-		else if (*ptr == 127)
-			temp += 2;
-		else if (!eightbit)
-			temp += 5;
-		else
-			temp++;
-		ptr++;
-	}
-	scr_horz = temp;
-	if ((scr_horz - horiz_offset) > last_col)
-	{
-		horiz_offset = (scr_horz - (scr_horz % 8)) - (COLS - 8);
-		midscreen(scr_vert, point);
-	}
-	else if (scr_horz < horiz_offset)
-	{
-		horiz_offset = max(0, (scr_horz - (scr_horz % 8)));
-		midscreen(scr_vert, point);
-	}
-}
-#else
 void
 scanline(wchar_t *pos)	/* find the proper horizontal position for the pointer	*/
 {
@@ -1186,7 +916,6 @@ scanline(wchar_t *pos)	/* find the proper horizontal position for the pointer	*/
 		midscreen(scr_vert, point);
 	}
 }
-#endif
 
 int
 tabshift(int temp_int)		/* give the number of spaces to shift	*/
@@ -1435,83 +1164,6 @@ draw_line(int vertical, int horiz, wchar_t *ptr, int t_pos, int length)	/* redra
 	wmove(text_win, vertical, (horiz - horiz_offset));
 }
 
-#ifndef EE_WCHAR
-void
-insert_line(int disp)			/* insert new line		*/
-{
-	int temp_pos;
-	int temp_pos2;
-	unsigned char *temp;
-	unsigned char *extra;
-	struct text *temp_nod;
-
-	text_changes = TRUE;
-	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
-	wclrtoeol(text_win);
-	temp_nod= txtalloc();
-	temp_nod->line = extra= malloc(10);
-	temp_nod->line_length = 1;
-	temp_nod->max_length = 10;
-	temp_nod->line_number = curr_line->line_number + 1;
-	temp_nod->next_line = curr_line->next_line;
-	if (temp_nod->next_line != NULL)
-		temp_nod->next_line->prev_line = temp_nod;
-	temp_nod->prev_line = curr_line;
-	curr_line->next_line = temp_nod;
-	temp_pos2 = position;
-	temp = point;
-	if (temp_pos2 < curr_line->line_length)
-	{
-		temp_pos = 1;
-		while (temp_pos2 < curr_line->line_length)
-		{
-			if ((temp_nod->max_length - temp_nod->line_length)< 5)
-				extra = resiz_line(10, temp_nod, temp_pos);
-			temp_nod->line_length++;
-			temp_pos++;
-			temp_pos2++;
-			*extra= *temp;
-			extra++;
-			temp++;
-		}
-		temp=point;
-		*temp = '\0';
-		temp = resiz_line((1 - temp_nod->line_length), curr_line, position);
-		curr_line->line_length = 1 + temp - curr_line->line;
-	}
-	curr_line->line_length = position;
-	absolute_lin++;
-	curr_line = temp_nod;
-	*extra = '\0';
-	position = 1;
-	point= curr_line->line;
-	if (disp)
-	{
-		if (scr_vert < last_line)
-		{
-			scr_vert++;
-			wclrtoeol(text_win);
-			wmove(text_win, scr_vert, 0);
-			winsertln(text_win);
-		}
-		else
-		{
-			wmove(text_win, 0,0);
-			wdeleteln(text_win);
-			wmove(text_win, last_line,0);
-			wclrtobot(text_win);
-		}
-		scr_pos = scr_horz = 0;
-		if (horiz_offset)
-		{
-			horiz_offset = 0;
-			midscreen(scr_vert, point);
-		}
-		draw_line(scr_vert, scr_horz, point, position,
-			curr_line->line_length);
-	}
-}
-#else
 void
 insert_line(int disp)			/* insert new line		*/
 {
@@ -1587,7 +1239,6 @@ insert_line(int disp)			/* insert new line		*/
 			curr_line->line_length);
 	}
 }
-#endif
 
 struct text *txtalloc()		/* allocate space for line structure	*/
 {
@@ -2683,26 +2334,6 @@ goto_line(wchar_t *cmd_str)
 	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
 }
 
-#ifndef EE_WCHAR
-void
-midscreen(int line, unsigned char *pnt)	/* put current line in middle of screen	*/
-{
-	struct text *mid_line;
-	int i;
-
-	line = min(line, last_line);
-	mid_line = curr_line;
-	for (i = 0; ((i < line) && (curr_line->prev_line != NULL)); i++)
-		curr_line = curr_line->prev_line;
-	scr_vert = scr_horz = 0;
-	wmove(text_win, 0, 0);
-	draw_screen();
-	scr_vert = i;
-	curr_line = mid_line;
-	scanline(pnt);
-	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
-}
-#else
 void
 midscreen(int line, wchar_t *pnt)	/* put current line in middle of screen	*/
 {
@@ -2721,7 +2352,6 @@ midscreen(int line, wchar_t *pnt)	/* put current line in middle of screen	*/
 	scanline(pnt);
 	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
 }
-#endif
 
 void
 get_options(int numargs, char *arguments[])	/* get arguments from command line	*/
@@ -3102,28 +2732,6 @@ get_line(int length, wchar_t *in_string, int *append)	/* read string and split i
 	}
 }
 
-#ifndef EE_WCHAR
-void
-draw_screen()		/* redraw the screen from current postion	*/
-{
-	struct text *temp_line;
-	unsigned char *line_out;
-	int temp_vert;
-
-	temp_line = curr_line;
-	temp_vert = scr_vert;
-	wclrtobot(text_win);
-	while ((temp_line != NULL) && (temp_vert <= last_line))
-	{
-		line_out = temp_line->line;
-		draw_line(temp_vert, 0, line_out, 1, temp_line->line_length);
-		temp_vert++;
-		temp_line = temp_line->next_line;
-	}
-	wmove(text_win, temp_vert, 0);
-	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
-}
-#else
 void
 draw_screen()		/* redraw the screen from current postion	*/
 {
@@ -3144,7 +2752,6 @@ draw_screen()		/* redraw the screen from current postion	*/
 	wmove(text_win, temp_vert, 0);
 	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
 }
-#endif
 
 void
 finish()	/* prepare to exit edit session	*/
@@ -5271,43 +4878,6 @@ ispell_op()
 	}
 }
 
-#ifndef EE_WCHAR
-int
-first_word_len(struct text *test_line)
-{
-	int counter;
-	unsigned char *pnt;
-
-	if (test_line == NULL)
-		return(0);
-
-	pnt = test_line->line;
-	if ((pnt == NULL) || (*pnt == '\0') ||
-	    (*pnt == '.') || (*pnt == '>'))
-		return(0);
-
-	if ((*pnt == ' ') || (*pnt == '\t'))
-	{
-		pnt = next_word(pnt);
-	}
-
-	if (*pnt == '\0')
-		return(0);
-
-	counter = 0;
-	while ((*pnt != '\0') && ((*pnt != ' ') && (*pnt != '\t')))
-	{
-		pnt++;
-		counter++;
-	}
-	while ((*pnt != '\0') && ((*pnt == ' ') || (*pnt == '\t')))
-	{
-		pnt++;
-		counter++;
-	}
-	return(counter);
-}
-#else
 int
 first_word_len(struct text *test_line)
 {
@@ -5343,7 +4913,6 @@ first_word_len(struct text *test_line)
 	}
 	return(counter);
 }
-#endif
 
 void
 Auto_Format()	/* format the paragraph according to set margins	*/
