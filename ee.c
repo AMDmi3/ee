@@ -265,6 +265,7 @@ int out_char(WINDOW *window, wchar_t character, int column);
 int len_char(int character, int column);
 int len_char(wchar_t character, int column);
 void draw_line(int vertical, int horiz, unsigned char *ptr, int t_pos, int length);
+void draw_line(int vertical, int horiz, wchar_t *ptr, int t_pos, int length);
 void insert_line(int disp);
 struct text *txtalloc(void);
 struct files *name_alloc(void);
@@ -1094,6 +1095,63 @@ draw_line(int vertical, int horiz, unsigned char *ptr, int t_pos, int length)	/*
 			abs_column++;
 			column++;
 			waddch(text_win, *temp);
+		}
+		posit++;
+		temp++;
+	}
+	if (column < last_col)
+		wclrtoeol(text_win);
+	wmove(text_win, vertical, (horiz - horiz_offset));
+}
+
+void
+draw_line(int vertical, int horiz, wchar_t *ptr, int t_pos, int length)	/* redraw line from current position */
+/* vertical -  current vertical position on screen		*/
+/* horiz - current horizontal position on screen	*/
+/* ptr - pointer to line				*/
+/* t_pos - current position (offset in bytes) from bol	*/
+/* length - length (in bytes) of line			*/
+{
+	int d;		/* partial length of special or tab char to display  */
+	wchar_t *temp;	/* temporary pointer to position in line	     */
+	int abs_column;	/* offset in screen units from begin of line	     */
+	int column;	/* horizontal position on screen		     */
+	int row;	/* vertical position on screen			     */
+	int posit;	/* temporary position indicator within line	     */
+
+	abs_column = horiz;
+	column = horiz - horiz_offset;
+	row = vertical;
+	temp = ptr;
+	d = 0;
+	posit = t_pos;
+	if (column < 0)
+	{
+		wmove(text_win, row, 0);
+		wclrtoeol(text_win);
+	}
+	while (column < 0)
+	{
+		d = len_char(*temp, abs_column);
+		abs_column += d;
+		column += d;
+		posit++;
+		temp++;
+	}
+	wmove(text_win, row, column);
+	wclrtoeol(text_win);
+	while ((posit < length) && (column <= last_col))
+	{
+		if (!iswprint(*temp))
+		{
+			column += len_char(*temp, abs_column);
+			abs_column += out_char(text_win, *temp, abs_column);
+		}
+		else
+		{
+			abs_column++;
+			column++;
+			waddnwstr(text_win, *temp, 1);
 		}
 		posit++;
 		temp++;
