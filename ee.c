@@ -4194,6 +4194,8 @@ Blank_Line(struct text *test_line)	/* test if line has any non-space characters	
 void
 Format()	/* format the paragraph according to set margins	*/
 {
+	// XXX: convert
+#if 0
 	int string_count;
 	int offset;
 	int temp_case;
@@ -4411,6 +4413,7 @@ Format()	/* format the paragraph according to set margins	*/
 	midscreen(scr_vert, point);
 	werase(com_win);
 	wrefresh(com_win);
+#endif
 }
 
 unsigned char *init_name[3] = {
