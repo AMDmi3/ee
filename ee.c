@@ -347,6 +347,7 @@ void Format(void);
 void ee_init(void);
 void dump_ee_conf(void);
 void echo_string(char *string);
+void echo_string(wchar_t *string);
 void spell_op(void);
 void ispell_op(void);
 int first_word_len(struct text *test_line);
@@ -4686,6 +4687,57 @@ echo_string(char *string)	/* echo the given string	*/
 			else
 			{
 				putchar(*temp);
+				temp++;
+			}
+		}
+
+	fflush(stdout);
+}
+
+void
+echo_string(wchar_t *string)	/* echo the given string	*/
+{
+	wchar_t *temp;
+	int Counter;
+
+		temp = string;
+		while (*temp != L'\0')
+		{
+			if (*temp == L'\\')
+			{
+				temp++;
+				if (*temp == L'n')
+					putwchar(L'\n');
+				else if (*temp == L't')
+					putwchar(L'\t');
+				else if (*temp == L'b')
+					putwchar(L'\b');
+				else if (*temp == L'r')
+					putwchar(L'\r');
+				else if (*temp == L'f')
+					putwchar(L'\f');
+				else if ((*temp == L'e') || (*temp == L'E'))
+					putwchar(L'\033');	/* escape */
+				else if (*temp == L'\\')
+					putwchar(L'\\');
+				else if (*temp == L'\'')
+					putwchar(L'\'');
+				else if ((*temp >= L'0') && (*temp <= L'9'))
+				{
+					Counter = 0;
+					while ((*temp >= L'0') && (*temp <= L'9'))
+					{
+						Counter = (8 * Counter) + (*temp - L'0');
+						temp++;
+					}
+					putwchar(Counter);
+					temp--;
+				}
+				temp++;
+			}
+			else
+			{
+				putwchar(*temp);
 				temp++;
 			}
 		}
