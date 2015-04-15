@@ -1,10 +1,11 @@
 PREFIX?=	/usr/local
 
-CC?=		gcc
+CXX=		g++48
+CC=		${CXX}
 CFLAGS?=	# empty
 CFLAGS+=	-DHAS_NCURSES -DHAS_UNISTD -DHAS_STDARG -DHAS_STDLIB -DHAS_SYS_WAIT
 #CFLAGS+=	-Wall -Wextra -pedantic
-CFLAGS+=	-w
+CFLAGS+=	-w -fpermissive
 
 LIBS=		-lncursesw
 
