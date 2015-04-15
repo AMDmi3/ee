@@ -1853,7 +1853,7 @@ find_pos()		/* move to the same column as on other line	*/
 	position = 1;
 	while ((scr_horz < scr_pos) && (position < curr_line->line_length))
 	{
-		if (*point == 9)
+		if (*point == 9) // XXX: \t
 			scr_horz += tabshift(scr_horz);
 		else if (*point < ' ')
 			scr_horz += 2;
