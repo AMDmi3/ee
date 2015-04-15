@@ -4784,6 +4784,8 @@ first_word_len(struct text *test_line)
 void
 Auto_Format()	/* format the paragraph according to set margins	*/
 {
+	// XXX: convert
+#if 0
 	int string_count;
 	int offset;
 	int temp_case;
@@ -5039,6 +5041,7 @@ Auto_Format()	/* format the paragraph according to set margins	*/
 
 	formatted = TRUE;
 	midscreen(scr_vert, point);
+#endif
 }
 
 void
