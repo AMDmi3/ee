@@ -69,6 +69,9 @@ char *version = "@(#) ee, version "  EE_VERSION  " $Revision: 1.104 $";
 #include <curses.h>
 #endif
 
+#include <stdio.h>
+#include <wchar.h>
+#include <wctype.h>
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
