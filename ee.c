@@ -3029,6 +3029,7 @@ get_line(int length, unsigned char *in_string, int *append)	/* read string and s
 	}
 }
 
+#ifndef EE_WCHAR
 void
 draw_screen()		/* redraw the screen from current postion	*/
 {
@@ -3049,6 +3050,28 @@ draw_screen()		/* redraw the screen from current postion	*/
 	wmove(text_win, temp_vert, 0);
 	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
 }
+#else
+void
+draw_screen()		/* redraw the screen from current postion	*/
+{
+	struct text *temp_line;
+	wchar_t *line_out;
+	int temp_vert;
+
+	temp_line = curr_line;
+	temp_vert = scr_vert;
+	wclrtobot(text_win);
+	while ((temp_line != NULL) && (temp_vert <= last_line))
+	{
+		line_out = temp_line->line;
+		draw_line(temp_vert, 0, line_out, 1, temp_line->line_length);
+		temp_vert++;
+		temp_line = temp_line->next_line;
+	}
+	wmove(text_win, temp_vert, 0);
+	wmove(text_win, scr_vert, (scr_horz - horiz_offset));
+}
+#endif
 
 void
 finish()	/* prepare to exit edit session	*/
