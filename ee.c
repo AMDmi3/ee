@@ -205,7 +205,8 @@ unsigned char *d_line;		/* deleted line				*/
 char in_string[513];	/* buffer for reading a file		*/
 unsigned char *print_command = (unsigned char *)"lpr";	/* string to use for the print command 	*/
 unsigned char *start_at_line = NULL;	/* move to this line at start of session*/
-int in;				/* input character			*/
+int in;				/* input status			*/
+wint_t inc;			/* input character			*/
 
 FILE *temp_fp;			/* temporary file pointer		*/
 FILE *bit_bucket;		/* file pointer to /dev/null		*/
@@ -299,6 +300,7 @@ void command(char *cmd_str1);
 int scan(char *line, int offset, int column);
 int scan(wchar_t *line, int offset, int column);
 char *get_string(char *prompt, int advance);
+wchar_t *get_string(wchar_t *prompt, int advance);
 int compare(char *string1, char *string2, int sensitive);
 int compare(wchar_t *string1, wchar_t *string2, int sensitive);
 void goto_line(char *cmd_str);
@@ -2403,6 +2405,87 @@ get_string(char *prompt, int advance)	/* read string from input on command line 
 		nam_str = next_word(nam_str);
 	string = malloc(strlen(nam_str) + 1);
 	strcpy(string, nam_str);
+	free(tmp_string);
+	wrefresh(com_win);
+	return(string);
+}
+
+wchar_t *
+get_string(wchar_t *prompt, int advance)	/* read string from input on command line */
+/* prompt - string containing user prompt message	*/
+/* advance - if true, skip leading spaces and tabs	*/
+{
+	wchar_t *string;
+	wchar_t *tmp_string;
+	wchar_t *nam_str;
+	wchar_t *g_point;
+	int tmp_int;
+	int g_horz, g_position, g_pos;
+	int esc_flag;
+
+	g_point = tmp_string = malloc(512 * sizeof(wchar_t));
+	wmove(com_win,0,0);
+	wclrtoeol(com_win);
+	waddwstr(com_win, prompt);
+	wrefresh(com_win);
+	nam_str = tmp_string;
+	clear_com_win = TRUE;
+	g_horz = g_position = scan(prompt, wcslen(prompt), 0);
+	g_pos = 0;
+	do
+	{
+		esc_flag = FALSE;
+		in = wget_wch(com_win, &inc);
+		if (in == ERR)
+			exit(0);
+		if (((inc == 8) || (inc == 127) || (inc == KEY_BACKSPACE)) && (g_pos > 0))
+		{
+			tmp_int = g_horz;
+			g_pos--;
+			g_horz = scan(g_point, g_pos, g_position);
+			tmp_int = tmp_int - g_horz;
+			for (; 0 < tmp_int; tmp_int--)
+			{
+				if ((g_horz+tmp_int) < (last_col - 1))
+				{
+					waddch(com_win, '\010');
+					waddch(com_win, ' ');
+					waddch(com_win, '\010');
+				}
+			}
+			nam_str--;
+		}
+		else if ((inc != 8) && (inc != 127) && (inc != '\n') && (inc != '\r') && (inc < 256))
+		{
+			if (inc == '\026')	/* control-v, accept next character verbatim	*/
+			{			/* allows entry of ^m, ^j, and ^h	*/
+				esc_flag = TRUE;
+				in = wget_wch(com_win, &inc);
+				if (in == ERR)
+					exit(0);
+			}
+			*nam_str = inc;
+			g_pos++;
+			if (!iswprint(inc) && (g_horz < (last_col - 1)))
+				g_horz += out_char(com_win, inc, g_horz);
+			else
+			{
+				g_horz++;
+				if (g_horz < (last_col - 1))
+					waddnwstr(com_win, &inc, 1);
+			}
+			nam_str++;
+		}
+		wrefresh(com_win);
+		if (esc_flag)
+			inc = L'\0';
+	} while ((inc != L'\n') && (inc != L'\r'));
+	*nam_str = '\0';
+	nam_str = tmp_string;
+	if (((*nam_str == L' ') || (*nam_str == L'\t')) && (advance))
+		nam_str = next_word(nam_str);
+	string = malloc((wcslen(nam_str) + 1) * sizeof(wchar_t));
+	wcscpy(string, nam_str);
 	free(tmp_string);
 	wrefresh(com_win);
 	return(string);
