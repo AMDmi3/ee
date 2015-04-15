@@ -887,6 +887,7 @@ insert(wchar_t character)		/* insert character into line		*/
 }
 #endif
 
+#ifndef EE_WCHAR
 void
 deletex(int disp)			/* delete character		*/
 {
@@ -992,6 +993,113 @@ deletex(int disp)			/* delete character		*/
 	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
 	formatted = FALSE;
 }
+#else
+void
+deletex(int disp)			/* delete character		*/
+{
+	wchar_t *tp;
+	wchar_t *temp2;
+	struct text *temp_buff;
+	int temp_vert;
+	int temp_pos;
+	int del_width = 1;
+
+	if (point != curr_line->line)	/* if not at beginning of line	*/
+	{
+		text_changes = TRUE;
+		temp2 = tp = point;
+		if ((ee_chinese) && (position >= 2) && (*(point - 2) > 127))
+		{
+			del_width = 2;
+		}
+		tp -= del_width;
+		point -= del_width;
+		position -= del_width;
+		temp_pos = position;
+		curr_line->line_length -= del_width;
+		if (*tp < L' ')	/* check for TAB */ // XXX: iswcntl?
+			scanline(tp);
+		else
+			scr_horz -= del_width;
+		scr_pos = scr_horz;
+		if (in == 8)
+		{
+			if (del_width == 1)
+				*d_char = *point; /* save deleted character  */
+			else
+			{
+				d_char[0] = *point;
+				d_char[1] = *(point + 1);
+			}
+			d_char[del_width] = L'\0';
+		}
+		while (temp_pos <= curr_line->line_length)
+		{
+			temp_pos++;
+			*tp = *temp2;
+			tp++;
+			temp2++;
+		}
+		if ((scr_horz < horiz_offset) && (horiz_offset > 0))
+		{
+			horiz_offset -= 8;
+			midscreen(scr_vert, point);
+		}
+	}
+	else if (curr_line->prev_line != NULL)
+	{
+		text_changes = TRUE;
+		left(disp);			/* go to previous line	*/
+		temp_buff = curr_line->next_line;
+		point = resiz_line(temp_buff->line_length, curr_line, position);
+		if (temp_buff->next_line != NULL)
+			temp_buff->next_line->prev_line = curr_line;
+		curr_line->next_line = temp_buff->next_line;
+		temp2 = temp_buff->line;
+		if (in == 8)
+		{
+			d_char[0] = L'\n';
+			d_char[1] = L'\0';
+		}
+		tp = point;
+		temp_pos = 1;
+		while (temp_pos < temp_buff->line_length)
+		{
+			curr_line->line_length++;
+			temp_pos++;
+			*tp = *temp2;
+			tp++;
+			temp2++;
+		}
+		*tp = L'\0';
+		free(temp_buff->line);
+		free(temp_buff);
+		temp_buff = curr_line;
+		temp_vert = scr_vert;
+		scr_pos = scr_horz;
+		if (scr_vert < last_line)
+		{
+			wmove(text_win, scr_vert + 1, 0);
+			wdeleteln(text_win);
+		}
+		while ((temp_buff != NULL) && (temp_vert < last_line))
+		{
+			temp_buff = temp_buff->next_line;
+			temp_vert++;
+		}
+		if ((temp_vert == last_line) && (temp_buff != NULL))
+		{
+			tp = temp_buff->line;
+			wmove(text_win, last_line,0);
+			wclrtobot(text_win);
+			draw_line(last_line, 0, tp, 1, temp_buff->line_length);
+			wmove(text_win, scr_vert, (scr_horz - horiz_offset));
+		}
+	}
+	draw_line(scr_vert, scr_horz, point, position, curr_line->line_length);
+	formatted = FALSE;
+}
+#endif
 
 #ifndef EE_WCHAR
 void
