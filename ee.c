@@ -263,6 +263,7 @@ int tabshift(int temp_int);
 int out_char(WINDOW *window, int character, int column);
 int out_char(WINDOW *window, wchar_t character, int column);
 int len_char(int character, int column);
+int len_char(wchar_t character, int column);
 void draw_line(int vertical, int horiz, unsigned char *ptr, int t_pos, int length);
 void insert_line(int disp);
 struct text *txtalloc(void);
@@ -1021,6 +1022,26 @@ len_char(int character, int column)	/* return the length of the character	*/
 		length = 5;
 	else
 		length = 1;
+
+	return(length);
+}
+
+int
+len_char(wchar_t character, int column)	/* return the length of the character	*/
+/* column - the column must be known to provide spacing for tabs	*/
+{
+	int length;
+
+	if (character == L'\t')
+		length = tabshift(column);
+	else if ((character >= 0) && (character < 32))
+		length = 2;
+	else if (character == 127)
+		length = 2;
+	else
+		length = 1;
+
+	// XXX: use iswcntrl
 
 	return(length);
 }
