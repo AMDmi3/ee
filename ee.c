@@ -61,6 +61,8 @@ char *ee_copyright_message =
 
 char *version = "@(#) ee, version "  EE_VERSION  " $Revision: 1.104 $";
 
+#define NCURSES_WIDECHAR 1
+
 #ifdef NCURSE
 #include "new_curse.h"
 #elif HAS_NCURSES
