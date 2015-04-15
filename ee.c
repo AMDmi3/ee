@@ -4797,6 +4797,7 @@ ispell_op()
 	}
 }
 
+#ifndef EE_WCHAR
 int
 first_word_len(struct text *test_line)
 {
@@ -4832,6 +4833,43 @@ first_word_len(struct text *test_line)
 	}
 	return(counter);
 }
+#else
+int
+first_word_len(struct text *test_line)
+{
+	int counter;
+	wchar_t *pnt;
+
+	if (test_line == NULL)
+		return(0);
+
+	pnt = test_line->line;
+	if ((pnt == NULL) || (*pnt == L'\0') ||
+	    (*pnt == L'.') || (*pnt == L'>'))
+		return(0);
+
+	if ((*pnt == L' ') || (*pnt == L'\t'))
+	{
+		pnt = next_word(pnt);
+	}
+
+	if (*pnt == L'\0')
+		return(0);
+
+	counter = 0;
+	while ((*pnt != L'\0') && ((*pnt != L' ') && (*pnt != L'\t')))
+	{
+		pnt++;
+		counter++;
+	}
+	while ((*pnt != L'\0') && ((*pnt == L' ') || (*pnt == L'\t')))
+	{
+		pnt++;
+		counter++;
+	}
+	return(counter);
+}
+#endif
 
 void
 Auto_Format()	/* format the paragraph according to set margins	*/
