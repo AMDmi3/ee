@@ -3056,9 +3056,9 @@ undel_line()			/* undelete last deleted line		*/
 void
 adv_word()			/* advance to next word		*/
 {
-while ((position < curr_line->line_length) && ((*point != 32) && (*point != 9)))
+	while ((position < curr_line->line_length) && ((*point != 32) && (*point != 9))) // XXX: change to ' ' and '\t'
 		right(TRUE);
-while ((position < curr_line->line_length) && ((*point == 32) || (*point == 9)))
+	while ((position < curr_line->line_length) && ((*point == 32) || (*point == 9))) // XXX: change to ' ' and '\t'
 		right(TRUE);
 }
 
