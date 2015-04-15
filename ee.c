@@ -4536,6 +4536,8 @@ redraw()
 int
 Blank_Line(struct text *test_line)	/* test if line has any non-space characters	*/
 {
+	// XXX: convert
+#if 0
 	unsigned char *line;
 	int length;
 	
@@ -4563,6 +4565,8 @@ Blank_Line(struct text *test_line)	/* test if line has any non-space characters	
 		return(FALSE);
 	else
 		return(TRUE);
+#endif
+	return FALSE;
 }
 
 void
