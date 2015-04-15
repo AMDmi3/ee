@@ -278,6 +278,7 @@ void command(char *cmd_str1);
 int scan(char *line, int offset, int column);
 char *get_string(char *prompt, int advance);
 int compare(char *string1, char *string2, int sensitive);
+int compare(wchar_t *string1, wchar_t *string2, int sensitive);
 void goto_line(char *cmd_str);
 void midscreen(int line, unsigned char *pnt);
 void get_options(int numargs, char *arguments[]);
@@ -1944,6 +1945,41 @@ compare(char *string1, char *string2, int sensitive)	/* compare two strings	*/
 		strng1++;
 		strng2++;
 		if ((*strng1 == '\0') || (*strng2 == '\0') || (*strng1 == ' ') || (*strng2 == ' '))
+			break;
+		tmp++;
+	}
+	return(equal);
+}
+
+int
+compare(wchar_t *string1, wchar_t *string2, int sensitive)	/* compare two strings	*/
+{
+	wchar_t *strng1;
+	wchar_t *strng2;
+	int tmp;
+	int equal;
+
+	strng1 = string1;
+	strng2 = string2;
+	tmp = 0;
+	if ((strng1 == NULL) || (strng2 == NULL) || (*strng1 == L'\0') || (*strng2 == L'\0'))
+		return(FALSE);
+	equal = TRUE;
+	while (equal)
+	{
+		if (sensitive)
+		{
+			if (*strng1 != *strng2)
+				equal = FALSE;
+		}
+		else
+		{
+			if (towupper(*strng1) != towupper(*strng2))
+				equal = FALSE;
+		}
+		strng1++;
+		strng2++;
+		if ((*strng1 == L'\0') || (*strng2 == L'\0') || (*strng1 == L' ') || (*strng2 == L' '))
 			break;
 		tmp++;
 	}
