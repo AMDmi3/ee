@@ -356,6 +356,7 @@ char *is_in_string(char *string, char *substring);
 char *resolve_name(char *name);
 int restrict_mode(void);
 int unique_test(char *string, char *list[]);
+int unique_test(wchar_t *string, wchar_t *list[]);
 void strings_init(void);
 
 /*
@@ -5307,6 +5308,25 @@ restrict_mode()
 
 int
 unique_test(char *string, char *list[])
+{
+	int counter;
+	int num_match;
+	int result;
+
+	num_match = 0;
+	counter = 0;
+	while (list[counter] != NULL)
+	{
+		result = compare(string, list[counter], FALSE);
+		if (result)
+			num_match++;
+		counter++;
+	}
+	return(num_match);
+}
+
+int
+unique_test(wchar_t *string, wchar_t *list[])
 {
 	int counter;
 	int num_match;
